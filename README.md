@@ -99,6 +99,7 @@ def cTd1v0oRMpkTIwV(χrOηsRλo0Ps, F2Hq4yQWLg0=2):
 
 ## ⚠️ Notes
 
+- This is a only beta test
 - Test obfuscated code before deployment
 - Complex f-strings may need conversion to `.format()`
 - Requires Python 3.7+ and `astunparse` for older versions
