@@ -30,7 +30,7 @@ python main.py
 ### Obfuscation Levels
 - **🟢 Basic** - Fast, essential protection
 - **🟡 Intermediate** - Balanced security/performance
-- **🔴 Advanced** - Maximum protection
+- **🔴 Advanced** - Maximum protection (ts is test)
 
 ## 📝 Example
 
