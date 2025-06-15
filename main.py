@@ -6,7 +6,6 @@ from pathlib import Path
 from core.obfuscator import PyObfuscator
 
 class Colors:
-    """ANSI color codes for terminal output"""
     HEADER = '\033[95m'
     BLUE = '\033[94m'
     CYAN = '\033[96m'
@@ -18,7 +17,6 @@ class Colors:
     END = '\033[0m'
 
 def colored_print(text, color=Colors.END):
-    """Print colored text to terminal"""
     print(f"{color}{text}{Colors.END}")
 
 def print_banner():
