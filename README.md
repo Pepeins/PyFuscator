@@ -1,7 +1,7 @@
 ```markdown
-# PyFuscator 🐍🔒
+# PyObfuscator 🐍🔒
 
-Advanced Python code obfuscator with multiple protection techniques including control flow flattening, string encryption, and smart name scrambling.
+Python code obfuscator with multiple protection techniques including control flow flattening, string encryption, and smart name scrambling.
 
 ## 🚀 Features
 
