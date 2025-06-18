@@ -23,7 +23,6 @@ except AttributeError:
             raise RuntimeError("Se requiere Python 3.9+ o instalar 'astunparse': pip install astunparse")
 
 class DependencyTracker:
-    """Track variable definitions and usage to avoid breaking dependencies"""
     
     def __init__(self):
         self.defined_names = set()
@@ -52,7 +51,6 @@ class DependencyTracker:
         self.add_definition(name)
     
     def is_safe_to_obfuscate(self, name):
-        """Check if a name is safe to obfuscate without breaking dependencies"""
         # Don't obfuscate if it's used but not defined (external dependency)
         if name in self.used_names and name not in self.defined_names:
             return False
