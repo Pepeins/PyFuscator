@@ -5,13 +5,11 @@ import random
 import string
 
 def generate_name(length=12, prefix=""):
-    """Generate obfuscated variable names with confusing characters"""
     # More conservative character selection to avoid encoding issues
     confusing_chars = "Il1O0"
     # Reduced unicode chars to avoid potential issues
     unicode_chars = "αβγδεζηθικλμνξοπρστυφχψω"
     
-    # Base character set
     base_chars = string.ascii_letters + string.digits
     population = base_chars + confusing_chars
     
@@ -19,14 +17,12 @@ def generate_name(length=12, prefix=""):
     if random.random() < 0.3:
         population += unicode_chars
     
-    # Generate name
     name = ''.join(random.choices(population, k=length))
     
     # Ensure it starts with a valid character
     if not name[0].isalpha() and name[0] != '_':
         name = random.choice(string.ascii_letters + '_') + name[1:]
     
-    # Make sure it doesn't conflict with common names
     reserved_endings = ['__', '_builtin', '_module', '_class']
     for ending in reserved_endings:
         if name.endswith(ending):
@@ -35,11 +31,9 @@ def generate_name(length=12, prefix=""):
     return prefix + name
 
 def xor_string(s: str):
-    """XOR encoding for strings with random key - more robust"""
     if not s:
         return s, ""
     
-    # Limit string length to avoid issues
     if len(s) > 200:
         return s, ""
         
@@ -65,7 +59,7 @@ def xor_string(s: str):
     except Exception:
         return s, ""
 
-# Multi-layer encoding functions - more robust
+# Multi-layer encoding functions
 def _encode_b64(s): 
     try:
         if len(s) > 100:  # Limit length
@@ -128,7 +122,6 @@ ENCODING_LAYERS = [
 ]
 
 def encode_string_multilayer(s: str):
-    """Apply multiple encoding layers to a string - more conservative"""
     if not s or len(s) > 100:  # More conservative length limit
         return ast.Constant(value=s)
         
@@ -225,7 +218,7 @@ def __decode_multilayer(data, layers):
 """
 }
 
-# Opaque predicates - more reliable
+# Opaque predicates
 def create_opaque_predicate(always_true=True):
     """Create mathematically provable true/false conditions"""
     x = random.randint(5, 50)  # Smaller range to avoid overflow
@@ -271,9 +264,8 @@ def create_opaque_predicate(always_true=True):
     
     return random.choice(predicates)
 
-# Dead code generation - simpler and safer
+# Dead code generation
 def create_dead_code_branch():
-    """Create unreachable code branch"""
     var1 = generate_name(6, prefix="dead")
     
     return ast.If(
@@ -288,7 +280,6 @@ def create_dead_code_branch():
     )
 
 def generate_dummy_code(level=2):
-    """Generate harmless dummy code"""
     if level <= 1:
         # Simple assignment
         var_name = generate_name(6, prefix="dummy")
