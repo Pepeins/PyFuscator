@@ -3,6 +3,7 @@ import ast
 import base64
 import random
 import string
+import sys
 
 def generate_name(length=12, prefix=""):
     # More conservative character selection to avoid encoding issues
@@ -59,59 +60,65 @@ def xor_string(s: str):
     except Exception:
         return s, ""
 
-# Multi-layer encoding functions
+# Multi-layer encoding functions with improved error handling
 def _encode_b64(s): 
     try:
-        if len(s) > 100:  # Limit length
+        if not s or len(s) > 100:  # Limit length
             return s
         return base64.b64encode(s.encode('utf-8')).decode('ascii')
-    except Exception:
+    except (UnicodeError, ValueError, TypeError):
         return s
 
 def _decode_b64(s): 
     try:
+        if not s:
+            return s
         return base64.b64decode(s).decode('utf-8')
-    except Exception:
+    except (UnicodeError, ValueError, TypeError):
         return s
 
 def _encode_rot(s): 
     try:
-        if len(s) > 100:  # Limit length
+        if not s or len(s) > 100:  # Limit length
             return s
         return ''.join(chr((ord(c) + 13) % 256) for c in s)
-    except Exception:
+    except (ValueError, TypeError):
         return s
 
 def _decode_rot(s): 
     try:
+        if not s:
+            return s
         return ''.join(chr((ord(c) - 13 + 256) % 256) for c in s)
-    except Exception:
+    except (ValueError, TypeError):
         return s
 
 def _encode_reverse(s): 
     try:
-        return s[::-1]
-    except Exception:
+        return s[::-1] if s else s
+    except (AttributeError, TypeError):
         return s
 
 def _decode_reverse(s): 
     try:
-        return s[::-1]
-    except Exception:
+        return s[::-1] if s else s
+    except (AttributeError, TypeError):
         return s
 
 def _encode_hex(s): 
     try:
-        if len(s) > 50:  # Limit length for hex encoding
+        if not s or len(s) > 50:  # Limit length for hex encoding
             return s
         return s.encode('utf-8').hex()
-    except Exception:
+    except (UnicodeError, AttributeError):
         return s
 
 def _decode_hex(s): 
     try:
+        if not s:
+            return s
         return bytes.fromhex(s).decode('utf-8')
-    except Exception:
+    except (ValueError, UnicodeError, TypeError):
         return s
 
 ENCODING_LAYERS = [
@@ -159,7 +166,7 @@ def encode_string_multilayer(s: str):
     except Exception:
         return ast.Constant(value=s)
 
-# Enhanced decode functions with better error handling
+# Enhanced decode functions with better error handling and optimization
 DECODE_FUNCTIONS = {
     '__decode_xor': """
 def __decode_xor(data, key):
@@ -167,7 +174,7 @@ def __decode_xor(data, key):
         return data
     try:
         return ''.join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(data))
-    except (ValueError, TypeError, IndexError):
+    except (ValueError, TypeError, IndexError, OverflowError):
         return data
 """,
     '__decode_multilayer': """
@@ -218,9 +225,8 @@ def __decode_multilayer(data, layers):
 """
 }
 
-# Opaque predicates
+# Opaque predicates with better mathematical properties
 def create_opaque_predicate(always_true=True):
-    """Create mathematically provable true/false conditions"""
     x = random.randint(5, 50)  # Smaller range to avoid overflow
     y = random.randint(5, 50)
     
@@ -245,6 +251,12 @@ def create_opaque_predicate(always_true=True):
                 ops=[ast.Eq()], 
                 comparators=[ast.Constant(x)]
             ),
+            # Power of 2 identity
+            ast.Compare(
+                left=ast.BinOp(left=ast.Constant(x), op=ast.BitOr(), right=ast.Constant(x)),
+                ops=[ast.Eq()], 
+                comparators=[ast.Constant(x)]
+            ),
         ]
     else:  # always_false
         predicates = [
@@ -260,37 +272,109 @@ def create_opaque_predicate(always_true=True):
                 ops=[ast.Lt()], 
                 comparators=[ast.Constant(0)]
             ),
+            # String cannot be longer than itself
+            ast.Compare(
+                left=ast.Call(func=ast.Name(id='len', ctx=ast.Load()), 
+                             args=[ast.Constant("test")], keywords=[]),
+                ops=[ast.Gt()], 
+                comparators=[ast.Constant(sys.maxsize)]
+            ),
         ]
     
     return random.choice(predicates)
 
-# Dead code generation
+# Dead code generation with more variety
 def create_dead_code_branch():
     var1 = generate_name(6, prefix="dead")
     
-    return ast.If(
-        test=create_opaque_predicate(always_true=False),
-        body=[
+    # Randomly choose between different types of dead code
+    dead_code_type = random.choice(['assignment', 'calculation', 'string_op'])
+    
+    if dead_code_type == 'assignment':
+        body = [
             ast.Assign(
                 targets=[ast.Name(id=var1, ctx=ast.Store())], 
                 value=ast.Constant(random.randint(100, 999))
             ),
-        ],
+        ]
+    elif dead_code_type == 'calculation':
+        body = [
+            ast.Assign(
+                targets=[ast.Name(id=var1, ctx=ast.Store())], 
+                value=ast.BinOp(
+                    left=ast.Constant(random.randint(10, 50)),
+                    op=ast.Mult(),
+                    right=ast.Constant(random.randint(2, 10))
+                )
+            ),
+        ]
+    else:  # string_op
+        body = [
+            ast.Assign(
+                targets=[ast.Name(id=var1, ctx=ast.Store())], 
+                value=ast.Call(
+                    func=ast.Attribute(
+                        value=ast.Constant("dummy"),
+                        attr='upper',
+                        ctx=ast.Load()
+                    ),
+                    args=[],
+                    keywords=[]
+                )
+            ),
+        ]
+    
+    return ast.If(
+        test=create_opaque_predicate(always_true=False),
+        body=body,
         orelse=[]
     )
 
 def generate_dummy_code(level=2):
     if level <= 1:
-        # Simple assignment
+        # Simple assignment with more variety
         var_name = generate_name(6, prefix="dummy")
+        
+        # Different types of dummy assignments
+        dummy_type = random.choice(['int', 'str', 'bool'])
+        
+        if dummy_type == 'int':
+            value = ast.Constant(random.randint(1, 100))
+        elif dummy_type == 'str':
+            value = ast.Constant(generate_name(5))
+        else:  # bool
+            value = ast.Constant(random.choice([True, False]))
+            
         return ast.Assign(
             targets=[ast.Name(id=var_name, ctx=ast.Store())], 
-            value=ast.Constant(random.randint(1, 100))
+            value=value
         )
     else:
         # Simple loop with basic operation
         var_name = generate_name(8, prefix="dummy")
         loop_var = generate_name(2, prefix="i")
+        
+        # Different types of loop operations
+        op_type = random.choice(['add', 'mult', 'str_concat'])
+        
+        if op_type == 'add':
+            operation = ast.BinOp(
+                left=ast.Constant(random.randint(10, 50)),
+                op=ast.Add(),
+                right=ast.Constant(random.randint(1, 5))
+            )
+        elif op_type == 'mult':
+            operation = ast.BinOp(
+                left=ast.Constant(random.randint(2, 10)),
+                op=ast.Mult(),
+                right=ast.Constant(random.randint(1, 3))
+            )
+        else:  # str_concat
+            operation = ast.BinOp(
+                left=ast.Constant(generate_name(3)),
+                op=ast.Add(),
+                right=ast.Constant(generate_name(2))
+            )
         
         return ast.For(
             target=ast.Name(id=loop_var, ctx=ast.Store()),
@@ -302,12 +386,26 @@ def generate_dummy_code(level=2):
             body=[
                 ast.Assign(
                     targets=[ast.Name(id=var_name, ctx=ast.Store())],
-                    value=ast.BinOp(
-                        left=ast.Constant(random.randint(10, 50)),
-                        op=ast.Add(),  # Only addition to be safe
-                        right=ast.Constant(random.randint(1, 5))
-                    )
+                    value=operation
                 )
             ],
             orelse=[]
         )
+
+# Helper function to validate AST nodes
+def validate_ast_node(node):
+    try:
+        ast.fix_missing_locations(node)
+        compile(ast.Expression(node) if isinstance(node, ast.expr) else ast.Module(body=[node], type_ignores=[]), '<string>', 'eval' if isinstance(node, ast.expr) else 'exec')
+        return True
+    except (SyntaxError, TypeError, ValueError):
+        return False
+
+# Performance optimization cache
+_predicate_cache = {}
+
+def get_cached_predicate(always_true=True):
+    cache_key = f"predicate_{always_true}"
+    if cache_key not in _predicate_cache:
+        _predicate_cache[cache_key] = create_opaque_predicate(always_true)
+    return _predicate_cache[cache_key]
