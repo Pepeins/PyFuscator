@@ -17,7 +17,6 @@ Python code obfuscator with multiple protection techniques including control flo
 ```bash
 git clone https://github.com/Pepeins/PyObuscator.git
 cd PyFuscator
-python install_dependencies.py
 python main.py
 ```
 
